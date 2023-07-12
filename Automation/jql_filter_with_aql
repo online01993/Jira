@@ -1,0 +1,2 @@
+#paid task automation
+key = {{issue.key}} and Организация in iqlFunction("object HAVING outboundReferences(objectTypeId = 150 and \"Дата окончания договора\" >= now() and object HAVING outboundReferences(objectTypeId = 423 and object HAVING outboundReferences(objectTypeId = 33 and Key IN (CRM-118184, CRM-118172, CRM-118176, CRM-118181, CRM-118186, CRM-118180, CRM-118187, CRM-118183, CRM-118185, CRM-118177))))")
