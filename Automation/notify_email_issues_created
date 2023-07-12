@@ -1,0 +1,7 @@
+#Endpoint
+  {{customfield_11111}}
+#Subjest
+  {{issue.key}} - "{{issue.summary}}"
+#Email Data
+  Задача "{{issue.summary}}" с ключом {{issue.key}} отмечена как закрытая.
+  Дата закрытия обращения - {{now}}.
