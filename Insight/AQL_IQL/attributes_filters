@@ -1,0 +1,2 @@
+#Офис
+object HAVING inboundReferences(objectTypeId = 38 and "Наименование организации" IN (${Ссылка на организацию${0}}))
