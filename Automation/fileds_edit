@@ -1,0 +1,8 @@
+#Fields -- "Когда Выполнить" to next business day when issue transition from open to waiting
+{{now.plusBusinessDays(1).toStartOfDay().plusHours(10)}}
+
+#Fields -- "Когда Выполнить" to current time when issue transition from waiting to open
+{{now}}
+
+#Fields -- "Когда Выполнить" on create
+{{now.plusHours(3)}}
