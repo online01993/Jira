@@ -1,0 +1,42 @@
+#пользовательское поле активов - Контакт
+  #Область фильтрации (AQL)
+    objectTypeId = 40 and "Уволен" != true
+  #Область фильтрации задач (AQL)
+    objectTypeId = 40 and object HAVING outboundReferences(objectTypeId = 38 and ((key = ID-575) OR (key in (${Организация${0}}))))
+
+#пользовательское поле активов - Офис_Подразделение
+  #Область фильтрации (AQL)
+    objectType = Офисы
+  #Область фильтрации задач (AQL)
+    objectTypeId = 39 and Упразднен != true and object HAVING inboundReferences(objectTypeId = 38 and ((key = ID-575) OR (key in (${Организация${0}}))))
+
+#пользовательское поле активов - Инфосистема
+  #Область фильтрации (AQL)
+    objectTypeId in (13,15,154,156,177)
+  #Область фильтрации задач (AQL)
+    ((objectTypeId in (13,15,154,156)) and object HAVING outboundReferences(objectType = Сотрудники and "JIRA User"  = currentUser())) OR ((objectTypeId in (15,154,156,177)) and "Инженерная группа" having user("currentUser()") and object HAVING outboundReferences(objectTypeId = 38 and ((key = ID-575) OR (key in (${Организация${0}}))))) OR ((objectTypeId in (13)) and "Инженерная группа" having user("currentUser()") and object HAVING outboundReferences(objectTypeId = 38 and ((key in (${Организация${0}}))))) OR ((objectTypeId in (13)) and key in (CMDB-3482))
+
+#пользовательское поле активов - Услуги
+  #Область фильтрации (AQL)
+    objectTypeId = 33 and object HAVING outboundReferences(objectTypeId = 56)
+  #Область фильтрации назначения (AQL)
+    objectTypeId = 33 and object HAVING outboundReferences(objectTypeId = 56 and "Проект" = currentProject()) and object HAVING inboundReferences(objectTypeId = 146 and KEY IN (${Решение${0}}))
+
+#пользовательское поле активов - Бизнеc направление
+  #Область фильтрации (AQL)
+    objectTypeId = 56
+  #Область фильтрации назначения (AQL)
+    objectTypeId = 56 AND Проект = currentProject() and object HAVING inboundReferences(objectTypeId = 33 and object HAVING inboundReferences(objectTypeId = 146 and KEY IN (${Решение${0}})))
+
+#пользовательское поле активов - Направление поддержки
+  #Область фильтрации (AQL)
+    objectTypeId = 147
+  #Область фильтрации назначения (AQL)
+    objectTypeId = 147 and object HAVING outboundReferences(objectTypeId = 56 and "Проект" = currentProject())  and object HAVING inboundReferences(objectTypeId = 33 and object HAVING inboundReferences(objectTypeid = 146 and KEY IN (${Решение${0}})))
+
+#пользовательское поле активов - Договоры
+  #Область фильтрации (AQL)
+    objectTypeId = 150
+  #Область фильтрации назначения (AQL)
+    objectTypeId = 150 and object HAVING inboundReferences(objectTypeId = 38 and KEY IN (${Организация${0}}))
+
