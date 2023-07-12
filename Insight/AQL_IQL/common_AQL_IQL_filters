@@ -1,0 +1,13 @@
+Common AOL/IQL filters:
+  #AQL будет использоваться для добавления объектов активов, связанных с выбранным объектом в поле Контакт.  
+  objectType = Сотрудники and "JIRA User" = currentUser()
+  #AQL будет использоваться для добавления объектов активов, связанных с выбранным объектом в поле Организация.
+  objectType = Компании and object HAVING inboundReferences(objectType = Сотрудники and "JIRA User" = currentUser())
+  #AQL будет использоваться для добавления объектов активов, связанных с выбранным объектом в поле Офис_Подразделение.
+  objectType = Офисы and object HAVING inboundReferences(objectType = Сотрудники and "JIRA User" = currentUser())
+  #AQL будет использоваться для добавления объектов активов, связанных с выбранным объектом в поле Бизнеc направление
+  objectTypeId = 56 AND Проект = currentProject() and object HAVING inboundReferences(objectTypeId = 33 and object HAVING inboundReferences(objectTypeId = 146 and KEY IN (${Решение${0}})))
+  #AQL будет использоваться для добавления объектов активов, связанных с выбранным объектом в поле Направление поддержки
+  objectTypeId = 147 and object HAVING outboundReferences(objectTypeId = 56 and "Проект" = currentProject()) and object HAVING inboundReferences(objectTypeId = 33 and object HAVING inboundReferences(objectTypeid = 146 and KEY IN (${Решение${0}})))
+  #AQL будет использоваться для добавления объектов активов, связанных с выбранным объектом в поле Услуги.
+  objectTypeId = 33 and object HAVING outboundReferences(objectTypeId = 56 and "Проект" = currentProject()) and object HAVING inboundReferences(objectTypeId = 146 and KEY IN (${Решение${0}}))
