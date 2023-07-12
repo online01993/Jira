@@ -1,0 +1,15 @@
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.bc.group.GroupService;
+import com.atlassian.jira.user.ApplicationUser;
+import com.opensymphony.workflow.InvalidInputException
+
+//CustomField
+def customFieldSystem =  ComponentAccessor.getCustomFieldManager().getCustomFieldObject(11105);// here replace the ID with ID of your custom field.
+
+def valueSystem = (String)issue.getCustomFieldValue(customFieldSystem);
+
+//and now check
+if (valueSystem == null)
+{
+    throw new InvalidInputException("Необходимо заполнитель поле Инфосистема, по которому была обработана заявка.")
+    }
