@@ -6,9 +6,9 @@
 
 #пользовательское поле активов - Офис_Подразделение
   #Область фильтрации (AQL)
-    objectType = Офисы
+    objectTypeId = 39 and Упразднен != true
   #Область фильтрации задач (AQL)
-    objectTypeId = 39 and Упразднен != true and object HAVING inboundReferences(objectTypeId = 38 and ((key = ID-575) OR (key in (${Организация${0}}))))
+    (object HAVING inboundReferences(objectTypeId = 38 and ((key = ID-575 and object HAVING inboundReferences(objectType = Сотрудники and "JIRA User"  = currentUser())) OR (key != ID-185 and key in (${Организация${0}}))))) OR (object HAVING inboundReferences(objectTypeId = 38 and key not in (ID-575, ID-185) and object HAVING inboundReferences(objectType = Сотрудники and "JIRA User"  = currentUser())))
 
 #пользовательское поле активов - Инфосистема
   #Область фильтрации (AQL)
