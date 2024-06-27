@@ -26,12 +26,12 @@ if (externalWorkchangeItems) {
 // Проверка изменений поля 'Инфосистема'
 if (infoSyschangeItems) {
     def infoSyslastValue = infoSyschangeItems.last().getFromString()
-    external_work_changed = true
+    infosys_changed = true
 }
 // Проверка изменений поля 'Офис_Подразделение'
 if (officechangeItems) {
     def officelastValue = officechangeItems.last().getFromString()
-    external_work_changed = true
+    office_changed = true
 }
 // Проверка заявленного типа работы и итоговый тип работы
 if (issue.getCustomFieldValue(ComponentAccessor.getCustomFieldManager().getCustomFieldObject(12503)) != issue.getCustomFieldValue(ComponentAccessor.getCustomFieldManager().getCustomFieldObject(11101))) {
