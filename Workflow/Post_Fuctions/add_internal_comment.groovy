@@ -1,5 +1,7 @@
 import com.atlassian.jira.component.ComponentAccessor
 import com.atlassian.jira.util.json.JSONObject
+import com.atlassian.jira.issue.comments.CommentManager
+
 
 CommentManager commentManager = ComponentAccessor.getCommentManager()
 def comment = """h2. *Задача не была автоматически распределена по следующей(-им) причине(-ам):*
