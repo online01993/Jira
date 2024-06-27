@@ -73,10 +73,10 @@ if (external_work_changed == true || infosys_changed == true || organization_cha
         comment = comment + '-- значение поля *"Контакт"* изменено. Было - *' + contactchangeItems.last().getFromString() + '*. Стало - *' + contactValue[0].getName() + '*\n'
     }
     if (workType_changed == true) {
-        comment = comment + '-- *тип выполненной работы* отличается от планируемого типа работы. Было - *' + issue.getCustomFieldValue(ComponentAccessor.getCustomFieldManager().getCustomFieldObject(12503)) + '*. Стало - *' + issue.getCustomFieldValue(ComponentAccessor.getCustomFieldManager().getCustomFieldObject(11101)) + '*\n'
+        comment = comment + '-- *тип выполненной работы* отличается от планируемого типа работы. Было - *' + issue.getCustomFieldValue(ComponentAccessor.getCustomFieldManager().getCustomFieldObject(12503))[0].getName() + '*. Стало - *' + issue.getCustomFieldValue(ComponentAccessor.getCustomFieldManager().getCustomFieldObject(11101))[0].getName() + '*\n'
     }
     if (work_changed == true) {
-        comment = comment + '-- *выполненная работа* отличается от планируемой работы. Было - *' + issue.getCustomFieldValue(ComponentAccessor.getCustomFieldManager().getCustomFieldObject(12501)) + '*. Стало - *' + issue.getCustomFieldValue(ComponentAccessor.getCustomFieldManager().getCustomFieldObject(11106)) + '*\n'
+        comment = comment + '-- *выполненная работа* отличается от планируемой работы. Было - *' + issue.getCustomFieldValue(ComponentAccessor.getCustomFieldManager().getCustomFieldObject(12501))[0].getName() + '*. Стало - *' + issue.getCustomFieldValue(ComponentAccessor.getCustomFieldManager().getCustomFieldObject(11106))[0].getName() + '*\n'
     }
     final SD_PUBLIC_COMMENT = "sd.public.comment"
     def properties = [(SD_PUBLIC_COMMENT): new JSONObject(["internal": true] as Map)]
