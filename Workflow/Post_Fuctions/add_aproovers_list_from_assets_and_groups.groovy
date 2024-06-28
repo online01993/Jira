@@ -24,7 +24,7 @@ issue.set {
             approoversList = approoversList + ", "
             approoversListComment = approoversListComment + '\n'
         }
-        setCustomFieldValue('Заверители', approoversList, projectChiefSearchAttr)        
+        setCustomFieldValue('Заверители', approoversList, ComponentAccessor.getUserManager().getUserByKey(projectChiefSearchAttr).getName())        
         approoversListComment = approoversListComment + "h3. *Руководитель отдела* - " + ComponentAccessor.getUserManager().getUserByKey(projectChiefSearchAttr).getDisplayName()
         final SD_PUBLIC_COMMENT = "sd.public.comment"
         def properties = [(SD_PUBLIC_COMMENT): new JSONObject(["internal": true] as Map)]
