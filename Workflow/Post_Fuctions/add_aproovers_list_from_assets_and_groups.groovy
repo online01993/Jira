@@ -1,4 +1,5 @@
 import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.util.json.JSONObject
 
 /* Get Insight Object Facade from plugin accessor */
 Class objectFacadeClass = ComponentAccessor.getPluginAccessor().getClassLoader().findClass("com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectFacade");  
