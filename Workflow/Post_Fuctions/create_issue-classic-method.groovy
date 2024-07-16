@@ -10,6 +10,7 @@ def projectManager = ComponentAccessor.projectManager
 def authenticationContext = ComponentAccessor.jiraAuthenticationContext
 def project = projectManager.getProjectByCurrentKey('ITS')
 def loggedInUser = authenticationContext.getLoggedInUser()
+def adminUser = ComponentAccessor.getUserManager().getUserByName('robot')
 def issueType = project.issueTypes.find { it.name == 'Сервисный запрос' }
 def description =  """
     h2. *Головная SUP задача, по распределению - (${issue.getKey()}).*
@@ -25,11 +26,13 @@ def issueInputParameters = new IssueInputParametersImpl()
     .setIssueTypeId(issueType.id)
     .setProjectId(project.id)
     .addCustomFieldValue(12505, issue.getKey().toString())
-    .addCustomFieldValue(10301, issue.getCustomFieldValue('Организация')[0].getName().toString()) 
-    .addCustomFieldValue(10300, issue.getCustomFieldValue('Контакт')[0].getName().toString())
-def validationResult = issueService.validateCreate(loggedInUser, issueInputParameters)
+    .addCustomFieldValue(10301, issue.getCustomFieldValue('Организация')[0].getObjectKey().toString()) 
+    .addCustomFieldValue(10300, issue.getCustomFieldValue('Контакт')[0].getObjectKey().toString())
+//def validationResult = issueService.validateCreate(loggedInUser, issueInputParameters)
+def validationResult = issueService.validateCreate(adminUser, issueInputParameters)
 if (validationResult.valid) {
-    def creationResult = issueService.create(loggedInUser, validationResult)
+    //def creationResult = issueService.create(loggedInUser, validationResult)
+    def creationResult = issueService.create(adminUser, validationResult)
     if (creationResult.valid) {
         //log.debug(creationResult.issue)
         issue.set { 
