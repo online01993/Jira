@@ -8,8 +8,7 @@ import com.riadalabs.jira.plugins.insight.channel.external.api.facade.IQLFacade
 
 /* Custom field for the waitng field */
 CustomField resolutionCF = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(11106);
-//final def searchJql = 'Решение is not EMPTY and Инфосистема in aqlFunction("objectType = Сервер") and "Направление поддержки" = "Консалтинг ИТ (CRM-2529)" and контакт is not EMPTY'// and \\"Тип устройства\\" = \\"Сетевое хранилище NAS\\"")'
-final def searchJql = 'Услуги = CRM-182'
+final def searchJql = 'resolution is not EMPTY and Решение is not EMPTY and project = its and ("Бизнеc направление" is EMPTY OR "Направление поддержки" is EMPTY OR Услуги is EMPTY)'
 def issues = Issues.search(searchJql.toString())
 for (issue in issues) {
     def valueresolutionCF = issue.getCustomFieldValue(resolutionCF);               
