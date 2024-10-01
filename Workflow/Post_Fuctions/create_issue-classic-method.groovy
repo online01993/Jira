@@ -16,7 +16,6 @@ def issueService = ComponentLocator.getComponent(IssueService)
 def project = ComponentAccessor.projectManager.getProjectByCurrentKey('ITS')
 def loggedInUser = ComponentAccessor.jiraAuthenticationContext.getLoggedInUser()
 def adminUser = ComponentAccessor.getUserManager().getUserByName('robot')
-ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(adminUser)
 def issueType
 def inc
 def planningWorkTypeIncident
@@ -73,9 +72,11 @@ if (planningWorkTypeSutask == true) {
            .addCustomFieldValue(12501, issue.getCustomFieldValue('Планируемая работа')[inc].getObjectKey().toString()) 
         def validationResult = issueService.validateSubTaskCreate(adminUser, issue.id, issueInputParameters)
         if (validationResult.valid) {
+            ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(adminUser)
             creationResult = issueService.create(adminUser, validationResult)
             if (creationResult.valid) {
                 ComponentAccessor.subTaskManager.createSubTaskIssueLink(issue, creationResult.issue, adminUser) //link subtask to parent task
+                ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(loggedInUser)
             } else {
                 CommentManager commentManager = ComponentAccessor.getCommentManager()
                 def comment = """h2. *Подзадача не была автоматически создана, поэтому необходимо повторно провести процедуру распределения либо обратиться к администратору Jira.*
@@ -124,6 +125,7 @@ if (planningWorkTypeIncident == true) {
            .addCustomFieldValue(12606, issue.getKey().toString()) 
         def validationResult = issueService.validateCreate(adminUser, issueInputParameters)
         if (validationResult.valid) {
+            ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(adminUser)
             creationResult = issueService.create(adminUser, validationResult)
             if (creationResult.valid) {
                 //NEED TO BO SET not UPDATE
@@ -137,6 +139,7 @@ if (planningWorkTypeIncident == true) {
                 Issues.getByKey(issue.getKey()).refresh() //refresh parentissue to get fresh values from screen "work planning"
                 ComponentAccessor.getIssueManager().updateIssue(adminUser, issue, EventDispatchOption.DO_NOT_DISPATCH, false) //update root Issue if necessary 
                 //
+                ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(loggedInUser)
             } else {
                 CommentManager commentManager = ComponentAccessor.getCommentManager()
                 def comment = """h2. *Инцидент(-ы) не был(-и) автоматически создан(-ы), поэтому необходимо повторно провести процедуру распределения либо обратиться к администратору Jira.*
@@ -178,6 +181,7 @@ if (planningWorkTypeProject == true) {
            .addCustomFieldValue(12606, issue.getKey().toString()) 
         def validationResult = issueService.validateCreate(adminUser, issueInputParameters)
         if (validationResult.valid) {
+            ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(adminUser)
             creationResult = issueService.create(adminUser, validationResult)
             if (creationResult.valid) {
                 //NEED TO BO SET not UPDATE
@@ -191,6 +195,7 @@ if (planningWorkTypeProject == true) {
                 Issues.getByKey(issue.getKey()).refresh() //refresh parentissue to get fresh values from screen "work planning"
                 ComponentAccessor.getIssueManager().updateIssue(adminUser, issue, EventDispatchOption.DO_NOT_DISPATCH, false) //update root Issue if necessary 
                 //
+                ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(loggedInUser)
             } else {
                 CommentManager commentManager = ComponentAccessor.getCommentManager()
                 def comment = """h2. *Проект(-ы) не был(-и) автоматически создан(-ы), поэтому необходимо повторно провести процедуру распределения либо обратиться к администратору Jira.*
