@@ -3,7 +3,7 @@ import com.atlassian.jira.component.ComponentAccessor
 /* Get Insight IQL Facade from plugin accessor */
 Class iqlFacadeClass = ComponentAccessor.getPluginAccessor().getClassLoader().findClass("com.riadalabs.jira.plugins.insight.channel.external.api.facade.IQLFacade");
 def iqlFacade = ComponentAccessor.getOSGiComponentInstanceOfType(iqlFacadeClass);
-def objectsInfosys = iqlFacade.findObjectsByIQLAndSchema(2, "Договор is EMPTY") 
+def objectsInfosys = iqlFacade.findObjectsByIQLAndSchema(2, "Договор is EMPTY and Key not in (CMDB-3605, CMDB-122977, CMDB-122980, CMDB-3482, CMDB-3603, CMDB-3483, CMDB-121597, CMDB-4538, CMDB-121983, CMDB-3604, CMDB-4718)") 
 for (object in objectsInfosys) {
     def asset = Assets.getByKey('CMDB-' + object.getId())
     def assetOrg = asset.getReferences('Организация')[0].getId()
@@ -15,8 +15,13 @@ for (object in objectsInfosys) {
             setAttribute('Договор') {
                 add('CRM-' + objectsSale[0].getId())
             }
-         }
-    }/* else if (objectsSale.size() > 1) {
-        return "error + CMDB" + objectsSale
+        }
+        log.warn('CRM-' + objectsSale[0].getId()) 
+    } /*else if (objectsSale.size() > 1) {
+        asset.update { 
+            setAttribute('Договор') {
+                add('CRM-121936')
+            }
+        }
     }*/
 }
