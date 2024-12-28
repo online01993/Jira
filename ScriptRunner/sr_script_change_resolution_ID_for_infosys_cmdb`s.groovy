@@ -39,9 +39,13 @@ for (issue in issues) {
         if (valueresolutionCF[i].getObjectKey() == resolutionBefore.toString()) {
             issue.update {
                 setCustomFieldValue('Решение') {remove(resolutionBefore.toString())}
+                setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)
+                setSendEmail(false)
             }
             issue.update {
                 setCustomFieldValue('Решение') {add(resolutionAfter.toString())}
+                setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)
+                setSendEmail(false)
             }            
         }               
     }
