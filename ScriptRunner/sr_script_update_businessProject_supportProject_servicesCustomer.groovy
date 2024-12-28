@@ -39,6 +39,8 @@ for (issue in issues) {
             } else {
                 return issue.getKey()
             }        
+        setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)
+        setSendEmail(false)
         }
         log.warn('issue - ' + issue.getKey())
     }
