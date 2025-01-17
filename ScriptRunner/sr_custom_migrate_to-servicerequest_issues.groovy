@@ -20,12 +20,13 @@ import com.riadalabs.jira.plugins.insight.channel.external.api.facade.IQLFacade
 import java.time.LocalDateTime
 
 @WithPlugin("com.riadalabs.jira.plugins.insight")
-//@PluginModule IQLFacade iqlFacade
+@PluginModule IQLFacade iqlFacade
 
 /* Custom field for the waitng field */
 
 CustomField resolutionCF = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(11106);
 final def searchJql = 'key != ITS-104825 and issuetype = "Техническая консультация" AND resolution is not EMPTY'
+//final def searchJql = 'key = ITS-104497'
 def issues = Issues.search(searchJql.toString())
 def adminUser = ComponentAccessor.getUserManager().getUserByName('robot')
 ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(adminUser)
@@ -54,147 +55,188 @@ for (i in issues) {
     ////
     
     //// create subtasks for IF cyrcle
-    if (issueWorks != null && planningWorkInfosystemsSize == 1) {
+    //if (issueWorks != null && planningWorkInfosystemsSize == 1) {
+    if (issueWorks != null && planningWorkInfosystemsSize != 0) {
         ////move issue to service request
         //def loggedInUser = authenticationContext.getLoggedInUser()
-        def planningWorkInfosystem = issue.getCustomFieldValue('Инфосистема')[0]
+        //def planningWorkInfosystem = issue.getCustomFieldValue('Инфосистема')[0]
+        def planningWorkInfosystems = issue.getCustomFieldValue('Инфосистема')
         def createUser = issue.getReporter()
         def assignee = issue.getAssignee()
         def issueType = project.issueTypes.find { it.name == 'Сервисный запрос' }
         def currSubtaskIssueType = project.issueTypes.find { it.name == 'Подзадача' }
         issue.setIssueType(issueType)
+        if (issue.getCustomFieldValue('Офис_Подразделение') == null) {
+            issue.setCustomFieldValue(ComponentAccessor.customFieldManager.getCustomFieldObjectByName('Офис_Подразделение'), 'ID-4152')
+        }
         def existingLabels = labelManager.getLabels(issue.id)*.label
         def labelsToSet = (existingLabels + newLabels).toSet()
         labelManager.setLabels(adminUser, issue.id, labelsToSet, false, true)
         ComponentAccessor.issueManager.updateIssue(adminUser, issue, EventDispatchOption.DO_NOT_DISPATCH, false)
         ////
 
-        ////work with issues and works
+        ////modify current subtask of issue
+        if (!issue.getSubTaskObjects().isEmpty()) {
+            def currSubtask
+            for (def currSubtaskSeq = 0; currSubtaskSeq < issue.getSubTaskObjects().size(); currSubtaskSeq++) {
+                //
+                currSubtask = issue.getSubTaskObjects()[currSubtaskSeq] as MutableIssue
+                currSubtask.setIssueType(currSubtaskIssueType)
+                ComponentAccessor.issueManager.updateIssue(adminUser, currSubtask, EventDispatchOption.DO_NOT_DISPATCH, false)
+                if (!currSubtask.getCustomFieldValue('Тип выполненной заявки')) {
+                    currSubtask.update {
+                        setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)
+                        setCustomFieldValue('Тип выполненной заявки', 'ID-3944')//Консультация и диагностика различных ИТ систем
+                    }
+                }
+                if (!currSubtask.getCustomFieldValue('Инфосистема')) {
+                    currSubtask.update {
+                        setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)
+                        setCustomFieldValue('Инфосистема', 'CMDB-4164')//help.it-russia.com
+                    }
+                }
+                if (!currSubtask.getCustomFieldValue('Решение')) {
+                    currSubtask.update {
+                        setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)
+                        setCustomFieldValue('Решение', 'ID-4091')//Консультация по работе облачного сервиса
+                    }
+                }
+                if (!currSubtask.getCustomFieldValue('Тип выполняемой работы')) {
+                    currSubtask.update {
+                        setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)
+                        setCustomFieldValue('Тип выполняемой работы', currSubtask.getCustomFieldValue('Тип выполненной заявки')[0].getObjectKey().toString())
+                    }
+                }
+                if (!currSubtask.getCustomFieldValue('Планируемая работа')) {
+                    currSubtask.update {
+                        setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)
+                        setCustomFieldValue('Планируемая работа', currSubtask.getCustomFieldValue('Решение')[0].getObjectKey().toString())
+                    }
+                }
+                currSubtask.update { 
+                    //set CF
+                    setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)                        
+                    setLabels('SLA_exclude')
+                    //setCustomFieldValue(12503, currSubtask.getCustomFieldValue('Тип выполненной заявки')[0].getObjectKey().toString()) 
+                    //setCustomFieldValue(12501, currSubtask.getCustomFieldValue('Решение')[0].getObjectKey().toString())
+                }
+            }
+        }
+        ////
+
+        ////work with suptasks and works
         for (def j = 0; j < issueWorks.size(); j++) {
-            ////modify corrent subtask of issue
-            if (!issue.getSubTaskObjects().isEmpty()) {
-                def currSubtask
-                for (def currSubtaskSeq = 0; currSubtaskSeq < issue.getSubTaskObjects().size(); currSubtaskSeq++) {
-                    //
-                    currSubtask = issue.getSubTaskObjects()[currSubtaskSeq] as MutableIssue
-                    currSubtask.setIssueType(currSubtaskIssueType)
-                    ComponentAccessor.issueManager.updateIssue(adminUser, currSubtask, EventDispatchOption.DO_NOT_DISPATCH, false)
-                    if (!currSubtask.getCustomFieldValue('Тип выполненной заявки') || !currSubtask.getCustomFieldValue('Решение')) {
-                        return 'error, current subtask is empty -- ' + currSubtask
-                    }
-                    currSubtask.update { 
-                        //set CF
-                        setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)                        
-                        setLabels('SLA_exclude')
-                        setCustomFieldValue(12503, currSubtask.getCustomFieldValue('Тип выполненной заявки')[0].getObjectKey().toString()) 
-                        setCustomFieldValue(12501, currSubtask.getCustomFieldValue('Решение')[0].getObjectKey().toString())
-                    }
-                }
-            }
-            ////
-            
-            ////create subtask for current work
-            def planningWorkType = issue.getCustomFieldValue('Тип выполненной заявки')[0]            
             def currentwork = issueWorks[j]
-            def currentSubTaskDescription = """
-            h3. +*В рамках текущей задачи требуется выполнить:*+
-            Тип выполняемой работы - *[${planningWorkType.getName()}|https://help.it-russia.com/secure/insight/assets/${planningWorkType.getObjectKey()}];*
-            Выполняемая работа - *[${currentwork.getName()}|https://help.it-russia.com/secure/insight/assets/${currentwork.getObjectKey()}];*
-            С какой инфосистемой связана - *[${planningWorkInfosystem.getName()}|https://help.it-russia.com/secure/insight/assets/${planningWorkInfosystem.getObjectKey()}];*
-            Требуется ли выезд по задаче - *${issue.getCustomFieldValue('Требуется выезд')}.*
-            """
-            //issueType = project.issueTypes.find { it.name == 'Подзадача' }
-            issueType = project.issueTypes.find { it.name == 'Поддержка-подзадача' }
-            description = description + currentSubTaskDescription
-            def originalIssueCreated = issue.getCreated().toTimestamp()
-            MutableIssue issueNew = issueFactory.getIssue()
-            issueNew.projectObject = project
-            issueNew.setParentId(issue.getId())
-            def summaryGenerated = currentwork.getName() + ' - ' + planningWorkInfosystem.getName() + ' (' + issue.summary + ')'
-            if (summaryGenerated.length() > 254) {
-                issueNew.summary = 'work.' + ' (' + issue.summary + ')'
-            } else {
-                issueNew.summary = summaryGenerated
-            }            
-            issueNew.setReporter(createUser)
-            issueNew.setAssignee(assignee)
-            issueNew.created = originalIssueCreated
-            issueNew.issueType = issueType            
-            issueNew.setComponent(issue.getComponents())
-            issueNew.description = description + issue.description
-            issueNew.setResolutionId(issue.getResolutionId())
-            issueNew.setResolutionDate(issue.getResolutionDate())
-            ComponentAccessor.getIssueManager().createIssueObject(adminUser, issueNew)
-            log.warn('issue is -- ' + issueNew)
-            ComponentAccessor.getSubTaskManager().createSubTaskIssueLink(issue, issueNew, adminUser) 
-            ////
+            ////search work and infosys and create subtask
+            for (def k = 0; k < planningWorkInfosystems.size(); k++) {
+                def currentWorkInfosystem = planningWorkInfosystems[k]
+                /* Get IQL search and return true?false       */ 
+                def objects = iqlFacade.findObjectsByIQLAndSchema(9, "key in (${currentwork.getObjectKey()}) and objecttypeid = 146 and object HAVING outboundReferences(objecttypeid = 152 and object HAVING inboundReferences(key in (${currentWorkInfosystem.getObjectKey()})))")
+                if (!objects.isEmpty()) {
+                    ////
+                    ////create subtask for current work
+                    def planningWorkType = issue.getCustomFieldValue('Тип выполненной заявки')[0]
+                    def currentSubTaskDescription = """
+                    h3. +*В рамках текущей задачи требуется выполнить:*+
+                    Тип выполняемой работы - *[${planningWorkType.getName()}|https://help.it-russia.com/secure/insight/assets/${planningWorkType.getObjectKey()}];*
+                    Выполняемая работа - *[${currentwork.getName()}|https://help.it-russia.com/secure/insight/assets/${currentwork.getObjectKey()}];*
+                    С какой инфосистемой связана - *[${currentWorkInfosystem.getName()}|https://help.it-russia.com/secure/insight/assets/${currentWorkInfosystem.getObjectKey()}];*
+                    Требуется ли выезд по задаче - *${issue.getCustomFieldValue('Требуется выезд')}.*
+                    """
+                    //issueType = project.issueTypes.find { it.name == 'Подзадача' }
+                    issueType = project.issueTypes.find { it.name == 'Поддержка-подзадача' }
+                    description = description + currentSubTaskDescription
+                    def originalIssueCreated = issue.getCreated().toTimestamp()
+                    MutableIssue issueNew = issueFactory.getIssue()
+                    issueNew.projectObject = project
+                    issueNew.setParentId(issue.getId())
+                    def summaryGenerated = currentwork.getName() + ' - ' + currentWorkInfosystem.getName() + ' (' + issue.summary + ')'
+                    if (summaryGenerated.length() > 254) {
+                        issueNew.summary = 'work.' + ' (' + issue.summary + ')'
+                    } else {
+                        issueNew.summary = summaryGenerated
+                    }            
+                    issueNew.setReporter(createUser)
+                    issueNew.setAssignee(assignee)
+                    issueNew.created = originalIssueCreated
+                    issueNew.issueType = issueType            
+                    issueNew.setComponent(issue.getComponents())
+                    issueNew.description = description + issue.description
+                    issueNew.setResolutionId(issue.getResolutionId())
+                    issueNew.setResolutionDate(issue.getResolutionDate())
+                    ComponentAccessor.getIssueManager().createIssueObject(adminUser, issueNew)
+                    log.warn('issue is -- ' + issueNew)
+                    ComponentAccessor.getSubTaskManager().createSubTaskIssueLink(issue, issueNew, adminUser) 
+                    ////
 
-            ////transition issue to close status and resolution
-            def transitionOptions= new TransitionOptions.Builder()
-            .skipConditions()
-            .skipPermissions()
-            .skipValidators()
-            .build()
-            int actionId = 171//transition ID ("закрыть автоматически") у поддержки-подзадачи
-            //int actionId = 191//transition ID ("закрыть автоматически") у подзадачи
-            def issueInputParametersTransition = new IssueInputParametersImpl()
-            .setResolutionId(issue.getResolutionId())
-            .setResolutionDate(issue.getResolutionDate().toTimestamp().toString())
-            .addCustomFieldValue(10402, ComponentAccessor.customFieldManager.getCustomFieldObjectByName('Требуется выезд').getValue(issue).optionId.toString())
-            .addCustomFieldValue(10401, ComponentAccessor.customFieldManager.getCustomFieldObjectByName('Платная задача').getValue(issue).optionId.toString())
-            .addCustomFieldValue(10400, ComponentAccessor.customFieldManager.getCustomFieldObjectByName('Доп материалы').getValue(issue).optionId.toString())
-            def transitionValidationResult = issueService.validateTransition(adminUser, issueNew.id, actionId, issueInputParametersTransition, transitionOptions)
-            if (transitionValidationResult.isValid()) {
-                def transitionResult = issueService.transition(adminUser, transitionValidationResult)
-                if (transitionResult.isValid()){
-                    //log.debug("Transitioned issue $issue through action $actionId")
+                    ////transition issue to close status and resolution
+                    def transitionOptions= new TransitionOptions.Builder()
+                    .skipConditions()
+                    .skipPermissions()
+                    .skipValidators()
+                    .build()
+                    int actionId = 171//transition ID ("закрыть автоматически") у поддержки-подзадачи
+                    //int actionId = 191//transition ID ("закрыть автоматически") у подзадачи
+                    def issueInputParametersTransition = new IssueInputParametersImpl()
+                    .setResolutionId(issue.getResolutionId())
+                    .setResolutionDate(issue.getResolutionDate().toTimestamp().toString())
+                    .addCustomFieldValue(10402, ComponentAccessor.customFieldManager.getCustomFieldObjectByName('Требуется выезд').getValue(issue).optionId.toString())
+                    .addCustomFieldValue(10401, ComponentAccessor.customFieldManager.getCustomFieldObjectByName('Платная задача').getValue(issue).optionId.toString())
+                    .addCustomFieldValue(10400, ComponentAccessor.customFieldManager.getCustomFieldObjectByName('Доп материалы').getValue(issue).optionId.toString())
+                    def transitionValidationResult = issueService.validateTransition(adminUser, issueNew.id, actionId, issueInputParametersTransition, transitionOptions)
+                    if (transitionValidationResult.isValid()) {
+                        def transitionResult = issueService.transition(adminUser, transitionValidationResult)
+                        if (transitionResult.isValid()){
+                            //log.debug("Transitioned issue $issue through action $actionId")
+                        }
+                    else {
+                        log.debug("Transition result is not valid") }
+                    }
+                    else {
+                        log.debug("The transitionValidation is not valid")
+                    }
+                    ////
+
+                    ////change issue-type to подзадача
+                    issueNew.setIssueType(project.issueTypes.find { it.name == 'Подзадача' }) 
+                    ComponentAccessor.issueManager.updateIssue(adminUser, issueNew, EventDispatchOption.DO_NOT_DISPATCH, false)
+                    ////
+
+                    ////update CF for issue
+                    issueNew.update { 
+                        //set CF
+                        setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)
+                        setResolution(issue.resolution.name)
+                        setResolutionDate(issue.resolutionDate.toString())
+                        setLabels('SLA_exclude')
+                        setCustomFieldValue(10301, issue.getCustomFieldValue('Организация')[0].getObjectKey().toString())
+                        setCustomFieldValue(10501, issue.getCustomFieldValue('Офис_Подразделение')[0].getObjectKey().toString())
+                        setCustomFieldValue(10300, issue.getCustomFieldValue('Контакт')[0].getObjectKey().toString())
+                        setCustomFieldValue(11105, currentWorkInfosystem.getObjectKey().toString())
+                        setCustomFieldValue(12503, issue.getCustomFieldValue('Тип выполненной заявки')[0].getObjectKey().toString()) 
+                        setCustomFieldValue(12501, currentwork.getObjectKey().toString())
+                        setCustomFieldValue(11101, issue.getCustomFieldValue('Тип выполненной заявки')[0].getObjectKey().toString()) 
+                        setCustomFieldValue(11106, currentwork.getObjectKey().toString())                
+                        setCustomFieldValue(10402, issue.getCustomFieldValue('Требуется выезд'))
+                        setCustomFieldValue(10400, issue.getCustomFieldValue('Доп материалы'))
+                        setCustomFieldValue(10401, issue.getCustomFieldValue('Платная задача'))
+                    }
+                    ////
+
+                    ////Clear current work subtask targets
+                    description = '' //clear description for next subtask
+                    ////
+                    
+                    ////end of cyrcle issue subtusk work
+                    //return  issueNew
                 }
-            else {
-                log.debug("Transition result is not valid") }
-            }
-            else {
-                log.debug("The transitionValidation is not valid")
-            }
-            ////
-
-            ////change issue-type to подзадача
-            issueNew.setIssueType(project.issueTypes.find { it.name == 'Подзадача' }) 
-            ComponentAccessor.issueManager.updateIssue(adminUser, issueNew, EventDispatchOption.DO_NOT_DISPATCH, false)
-            ////
-
-            ////update CF for issue
-            issueNew.update { 
-                //set CF
-                setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)
-                setResolution(issue.resolution.name)
-                setResolutionDate(issue.resolutionDate.toString())
-                setLabels('SLA_exclude')
-                setCustomFieldValue(10301, issue.getCustomFieldValue('Организация')[0].getObjectKey().toString())
-                setCustomFieldValue(10501, issue.getCustomFieldValue('Офис_Подразделение')[0].getObjectKey().toString())
-                setCustomFieldValue(10300, issue.getCustomFieldValue('Контакт')[0].getObjectKey().toString())
-                setCustomFieldValue(11105, issue.getCustomFieldValue('Инфосистема')[0].getObjectKey().toString())
-                setCustomFieldValue(12503, issue.getCustomFieldValue('Тип выполненной заявки')[0].getObjectKey().toString()) 
-                setCustomFieldValue(12501, currentwork.getObjectKey().toString())
-                setCustomFieldValue(11101, issue.getCustomFieldValue('Тип выполненной заявки')[0].getObjectKey().toString()) 
-                setCustomFieldValue(11106, currentwork.getObjectKey().toString())                
-                setCustomFieldValue(10402, issue.getCustomFieldValue('Требуется выезд'))
-                setCustomFieldValue(10400, issue.getCustomFieldValue('Доп материалы'))
-                setCustomFieldValue(10401, issue.getCustomFieldValue('Платная задача'))
-            }
-            ////
-
-            ////Clear current work subtask targets
-            description = '' //clear description for next subtask
-            ////
-            
-            ////end of cyrcle issue subtusk work
-            //return  issueNew
+            }            
         }        
         ////end for cyrcle of creating subtasks
         
         ////generate issue summary for service reqvest
-        @WithPlugin("com.riadalabs.jira.plugins.insight")
-        @PluginModule IQLFacade iqlFacade
+        //@WithPlugin("com.riadalabs.jira.plugins.insight")
+        //@PluginModule IQLFacade iqlFacade
 
         def organizationDescription = ''
         def officeDescription = ''
