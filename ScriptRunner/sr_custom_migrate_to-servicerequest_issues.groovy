@@ -1,6 +1,7 @@
 import com.atlassian.jira.issue.MutableIssue
-//def issue = Issues.getByKey('ITS-104825') as MutableIssue
+//def issue1 = Issues.getByKey('ITS-103824') as MutableIssue
 ////
+
 ////
 import com.atlassian.jira.issue.IssueFactory;
 import com.atlassian.jira.issue.UpdateIssueRequest;
@@ -25,8 +26,8 @@ import java.time.LocalDateTime
 /* Custom field for the waitng field */
 
 CustomField resolutionCF = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(11106);
-final def searchJql = 'key != ITS-104825 and issuetype = "Техническая консультация" AND resolution is not EMPTY'
-//final def searchJql = 'key = ITS-104497'
+final def searchJql = 'project = its and issuetype in ("Техническая консультация", Поддержка) AND resolution is not EMPTY and resolution not in (Дубликат, Отклонён, "Вне зоны ответственности исполнителя", Неактуально, "Не согласована платность") and Инфосистема is EMPTY'
+//final def searchJql = 'key = ITS-64319'
 def issues = Issues.search(searchJql.toString())
 def adminUser = ComponentAccessor.getUserManager().getUserByName('robot')
 ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(adminUser)
@@ -41,13 +42,13 @@ final List<String> newLabels = ["ITS-104325_migrated_issues"]
 for (i in issues) {
     ////create subtasks to service request
     def issue = Issues.getByKey(i.key) as MutableIssue
-    def issueWorks = issue.getCustomFieldValue('Решение')
     def planningWorkInfosystemsSize
     if (issue.getCustomFieldValue('Инфосистема')) {
         planningWorkInfosystemsSize = issue.getCustomFieldValue('Инфосистема').size()
     } else {
         planningWorkInfosystemsSize = 0
     }
+    def issueWorks = issue.getCustomFieldValue('Решение')    
     def description =  """
     h2. *Головная задача (${issue.getKey()}) была обработана.*
     Инженер, запланировавший работу - ${adminUser.getDisplayName()};
@@ -72,6 +73,7 @@ for (i in issues) {
         def existingLabels = labelManager.getLabels(issue.id)*.label
         def labelsToSet = (existingLabels + newLabels).toSet()
         labelManager.setLabels(adminUser, issue.id, labelsToSet, false, true)
+        log.warn(issue)
         ComponentAccessor.issueManager.updateIssue(adminUser, issue, EventDispatchOption.DO_NOT_DISPATCH, false)
         ////
 
@@ -101,6 +103,7 @@ for (i in issues) {
                         setCustomFieldValue('Решение', 'ID-4091')//Консультация по работе облачного сервиса
                     }
                 }
+                ComponentAccessor.issueManager.updateIssue(adminUser, currSubtask, EventDispatchOption.DO_NOT_DISPATCH, false)
                 if (!currSubtask.getCustomFieldValue('Тип выполняемой работы')) {
                     currSubtask.update {
                         setEventDispatchOption(EventDispatchOption.DO_NOT_DISPATCH)
@@ -120,6 +123,7 @@ for (i in issues) {
                     //setCustomFieldValue(12503, currSubtask.getCustomFieldValue('Тип выполненной заявки')[0].getObjectKey().toString()) 
                     //setCustomFieldValue(12501, currSubtask.getCustomFieldValue('Решение')[0].getObjectKey().toString())
                 }
+                ComponentAccessor.issueManager.updateIssue(adminUser, currSubtask, EventDispatchOption.DO_NOT_DISPATCH, false)
             }
         }
         ////
@@ -250,6 +254,7 @@ for (i in issues) {
         def issueAssignee = ''
         def summaryDescription
         def subTasks = issue.getSubTaskObjects()
+        log.warn('issue -- ' + issue + '!subTasks.isEmpty() -- ' + (!subTasks.isEmpty()))
         if (!subTasks.isEmpty()) {
             summaryDescription =  """
                     h2. *Корневой запрос ИТ решён.*
@@ -319,7 +324,7 @@ for (i in issues) {
             }
         } else {
             summaryDescription =  """
-                h2. *Корневой запрос ИТ отклонён.*
+                h2. *Корневой запрос ИТ обработан.*
                 Текущая дата формирования отчёта - ${LocalDateTime.now().format("dd.MM.yyyy - HH:mm:ss")}.
 
                 h3. Запланированных работ по запросу нет.
