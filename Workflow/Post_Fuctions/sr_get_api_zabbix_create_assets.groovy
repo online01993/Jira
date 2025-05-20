@@ -32,8 +32,8 @@ if (issue.getCustomFieldValue('triggerID_Zabbix')) {
         //create trigger db record
         //check parent triggerDB record
         // Параметры запроса
-        def url = 'https://zabbix.it-russia.com/api_jsonrpc.php'
-        def authToken = 'db6af42263a84e14ca0984cd8d78bc35af76598a2438fe2af457be5a57e51da2'
+        def url = 'https://zabbix-url/api_jsonrpc.php'
+        def authToken = 'authtoken_string'
         def triggerId = triggerID_Zabbix_cf
         // Создаем тело запроса
         def requestBody = [
