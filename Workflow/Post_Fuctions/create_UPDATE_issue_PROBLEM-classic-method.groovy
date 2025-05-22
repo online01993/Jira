@@ -61,7 +61,7 @@ if (triggerIdZabbix != null && triggerIdJira != null) {
         def properties = [(SD_PUBLIC_COMMENT): new JSONObject(["internal": false] as Map)]
         def user = ComponentAccessor.getUserManager().getUserByName('zabbix-robot')
         CommentManager commentManager = ComponentAccessor.getCommentManager()
-        commentManager.create(issueProblem,user, comment, null, null, new Date(),properties,false)
+        commentManager.create(issueProblem,user, comment, null, null, new Date(),properties,true)
     } else {
         // issue problem not exist, check counter whith incidents.count and create issue problem
         searchJql = "project = ITS AND issuetype = Инцидент AND triggerID_Jira = ${triggerIdJira[0].getObjectKey()}"
@@ -138,7 +138,7 @@ if (triggerIdZabbix != null && triggerIdJira != null) {
                     final SD_PUBLIC_COMMENT = "sd.public.comment"
                     def properties = [(SD_PUBLIC_COMMENT): new JSONObject(["internal": true] as Map)]
                     def user = ComponentAccessor.getUserManager().getUserByName('robot')
-                    commentManager.create(issue,user, comment, null, null, new Date(),properties,false)
+                    commentManager.create(issue,user, comment, null, null, new Date(),properties,true)
                 }
             } else {
                 CommentManager commentManager = ComponentAccessor.getCommentManager()
@@ -148,7 +148,7 @@ if (triggerIdZabbix != null && triggerIdJira != null) {
                 final SD_PUBLIC_COMMENT = "sd.public.comment"
                 def properties = [(SD_PUBLIC_COMMENT): new JSONObject(["internal": true] as Map)]
                 def user = ComponentAccessor.getUserManager().getUserByName('robot')
-                commentManager.create(issue,user, comment, null, null, new Date(),properties,false)
+                commentManager.create(issue,user, comment, null, null, new Date(),properties,true)
             }
         }
     }
