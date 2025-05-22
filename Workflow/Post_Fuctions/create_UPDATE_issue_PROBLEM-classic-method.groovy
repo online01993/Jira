@@ -80,31 +80,32 @@ if (triggerIdZabbix != null && triggerIdJira != null) {
             Список инцидентов по этой проблеме в поле Инциденты.
             """
             
+            /*
             // Get inginer line
             def componetsType
             def ingType = triggerIdJira[0].getReferences('Категория инженера')[0]
             if (ingType) {
-                switch (ingType.getObjectKey()) {
-                    case "ID-606" : {
-                        componetsType = project.getComponents().find() {it.name == 'Первая линия ТП'}.getId()
-                    }
-                    case "ID-607" : {
+                if (ingType.getObjectKey() == "ID-606") {
+                    componetsType = project.getComponents().find() {it.name == 'Первая линия ТП'}.getId()
+                } else {
+                    if (ingType.getObjectKey() == "ID-607") {
+                        componetsType = project.getComponents().find() {it.name == 'Вторая линия ТП'}.getId()
+                    } else {
+                        // set second line to default
                         componetsType = project.getComponents().find() {it.name == 'Вторая линия ТП'}.getId()
                     }
-                    default : {
-                        componetsType = project.getComponents().find() {it.name == 'Вторая линия ТП'}.getId()
-                    }
-                }
+                }                
             } else {
                 // ingtype is empty set second line to default
                 componetsType = project.getComponents().find() {it.name == 'Вторая линия ТП'}.getId()
             }
-            
+            */
+
             // Create issue problem
             def issueInputParameters = new IssueInputParametersImpl()
                 .setSummary("Устранение проблемы -- ${issue.summary}.")
                 .setDescription(currentDescription)
-                .setComponentIds(componetsType)
+                //.setComponentIds(componetsType)
                 .setPriorityId('3')           
                 .setReporterId(adminUser.name)
                 .setIssueTypeId(issueType.id)           
