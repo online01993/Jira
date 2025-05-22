@@ -37,8 +37,8 @@ List<Map> callZabbixApi(Map args) {
                 "selectFunctions": "extend",
                 "selectDiscoveryRule": "extend"
             ],
-        apiUrl: "https://zabbix-url/api_jsonrpc.php",
-        authToken: "authtoken_string",
+        apiUrl: "https://zabbix.it-russia.com/api_jsonrpc.php",
+        authToken: "04df13a082d46b701f64b9c6f6dc88305c71d5831e91da52fb988d56c8781a37",
         //user zabbix-robot
         requestId: 1,
         jsonrpc: "2.0"
@@ -139,7 +139,7 @@ ObjectBean assetsTriggerCreate(String triggerType, String parentTrigger, String 
                     if (url != null) {
                         setAttribute('Zabbix URL', url)
                     } else {
-                        setAttribute('Zabbix URL', "https://zabbix-url/zabbix.php?show=2&name=&severities%5B0%5D=0&severities%5B1%5D=1&severities%5B2%5D=2&severities%5B3%5D=3&severities%5B4%5D=4&severities%5B5%5D=5&show_symptoms=1&show_suppressed=1&inventory%5B0%5D%5Bfield%5D=type&inventory%5B0%5D%5Bvalue%5D=&evaltype=0&tags%5B0%5D%5Btag%5D=&tags%5B0%5D%5Boperator%5D=0&tags%5B0%5D%5Bvalue%5D=&show_tags=3&tag_name_format=0&tag_priority=&show_opdata=2&show_timeline=1&details=1&filter_name=&filter_show_counter=0&filter_custom_time=0&sort=clock&sortorder=DESC&age_state=0&unacknowledged=0&compact_view=0&highlight_row=0&action=problem.view&triggerids%5B%5D=${triggerId}")
+                        setAttribute('Zabbix URL', "https://zabbix.it-russia.com/zabbix.php?show=2&name=&severities%5B0%5D=0&severities%5B1%5D=1&severities%5B2%5D=2&severities%5B3%5D=3&severities%5B4%5D=4&severities%5B5%5D=5&show_symptoms=1&show_suppressed=1&inventory%5B0%5D%5Bfield%5D=type&inventory%5B0%5D%5Bvalue%5D=&evaltype=0&tags%5B0%5D%5Btag%5D=&tags%5B0%5D%5Boperator%5D=0&tags%5B0%5D%5Bvalue%5D=&show_tags=3&tag_name_format=0&tag_priority=&show_opdata=2&show_timeline=1&details=1&filter_name=&filter_show_counter=0&filter_custom_time=0&sort=clock&sortorder=DESC&age_state=0&unacknowledged=0&compact_view=0&highlight_row=0&action=problem.view&triggerids%5B%5D=${triggerId}")
                     }                    
                     if (parentTrigger != null) {
                         setAttribute('Категория триггера', parentTrigger)
@@ -190,13 +190,13 @@ ObjectBean assetsTriggerTemplatesCreate(String templateType, String name, String
         def url
         // Определяем генерацию URL триггера в соответствии с типом шаблона триггера - динамический или статический
         if (templateType == "trigger.get") {
-            url = "https://zabbix-url/triggers.php?form=update&triggerid=${objectTriggerTemplateIDNew}&context=template"
+            url = "https://zabbix.it-russia.com/triggers.php?form=update&triggerid=${objectTriggerTemplateIDNew}&context=template"
         }
         if (templateType == "triggerprototype.get") {
             def discoveryRule = zabbixTriggerTemplateNewGet[0].discoveryRule as Map
             def discoverid = discoveryRule?.itemid as String
             //def discoverid = zabbixTriggerTemplateNewGet[0].discoveryRule.itemid.toString()
-            url = "https://zabbix-url/trigger_prototypes.php?form=update&parent_discoveryid=${discoverid}&triggerid=${objectTriggerTemplateIDNew}&context=template"
+            url = "https://zabbix.it-russia.com/trigger_prototypes.php?form=update&parent_discoveryid=${discoverid}&triggerid=${objectTriggerTemplateIDNew}&context=template"
         }
         if (!objectTriggerTemplateParentID) {
             throw new IllegalArgumentException("Ошибка обработки функции, не удалось определить параметр родителя objectTriggerTemplateParentID")
@@ -271,12 +271,27 @@ if (triggerIdZabbix != null) {
             def objectTemplate = assetsTriggerSearch(zabbixTriggerGetTemp[0].templateid as String, [triggerType: triggerType])
             if (objectTemplate != null) {
                 // В базе есть такой родительский триггер, поэтому создаем карточку дочернего триггера
-                // Определим категорию инженера для данного триггера исходя из найденной записи родительского шаблона
+                // Определим категорию инженера для данного триггера исходя из найденной записи родительского шаблона                
+                if (objectTemplate[0].getReference('Категория инженера').getObjectKey()) {
+                    if (objectTemplate[0].getReference('Категория инженера').getObjectKey() == "ID-606") {
+                        ingType = "ID-606" // Первая линия технической поддержки
+                    } else {
+                        if (objectTemplate[0].getReference('Категория инженера').getObjectKey() == "ID-607") {
+                            ingType = "ID-607" // Вторая линия технической поддержки
+                        } else {
+                            ingType = "ID-607" // По-умолчанию установим вторая линия технической поддержки
+                        }
+                    }                
+                } else {
+                    ingType = "ID-607" // По-умолчанию установим вторая линия технической поддержки
+                }
+                /*
                 switch (objectTemplate[0].getReference('Категория инженера').getObjectKey()) {
                     case "ID-606": ingType = "ID-606" // Первая линия технической поддержки
                     case "ID-607": ingType = "ID-607" // Вторая линия технической поддержки
                     default : ingType = "ID-607" // По-умолчанию установим вторая линия технической поддержки
                 }
+                */
                 // Создаём карточку дочернего триггера с привязкой к инфосистеме
                 triggerType = "trigger"                
                 objectNew = assetsTriggerCreate(triggerType, objectTemplate[0].getObjectKey().toString(), issue.getCustomFieldValue('Инфосистема')[0].getObjectKey().toString(), zabbixTriggerGetTemp[0].description as String, triggerIdChield.toString(), zabbixTriggerGetTemp[0].priority as String, zabbixTriggerGetTemp[0].comments as String, ingType, null)
@@ -311,12 +326,27 @@ if (triggerIdZabbix != null) {
             def objectTemplate = assetsTriggerSearch(parent_triggerid, [triggerType: triggerType])
             if (objectTemplate != null) {
                 // В базе есть такой родительский триггер, поэтому создаем карточку дочернего триггера
-                // Определим категорию инженера для данного триггера исходя из найденной записи родительского шаблона
+                // Определим категорию инженера для данного триггера исходя из найденной записи родительского шаблона                
+                if (objectTemplate[0].getReference('Категория инженера').getObjectKey()) {
+                    if (objectTemplate[0].getReference('Категория инженера').getObjectKey() == "ID-606") {
+                        ingType = "ID-606" // Первая линия технической поддержки
+                    } else {
+                        if (objectTemplate[0].getReference('Категория инженера').getObjectKey() == "ID-607") {
+                            ingType = "ID-607" // Вторая линия технической поддержки
+                        } else {
+                            ingType = "ID-607" // По-умолчанию установим вторая линия технической поддержки
+                        }
+                    }                
+                } else {
+                    ingType = "ID-607" // По-умолчанию установим вторая линия технической поддержки
+                }
+                /*
                 switch (objectTemplate[0].getReference('Категория инженера').getObjectKey()) {
                     case "ID-606": ingType = "ID-606" // Первая линия технической поддержки
                     case "ID-607": ingType = "ID-607" // Вторая линия технической поддержки
                     default : ingType = "ID-607" // По-умолчанию установим вторая линия технической поддержки
                 }
+                */
                 // Создаём карточку дочернего триггера с привязкой к инфосистеме
                 triggerType = "trigger"                
                 objectNew = assetsTriggerCreate(triggerType, objectTemplate[0].getObjectKey().toString(), issue.getCustomFieldValue('Инфосистема')[0].getObjectKey().toString(), zabbixTriggerGetTemp[0].description as String, triggerIdChield.toString(), zabbixTriggerGetTemp[0].priority as String, zabbixTriggerGetTemp[0].comments as String, ingType, null)
