@@ -94,7 +94,12 @@ Issue createIssueObject (Issue parentIssue, String issueTypeIn,String summary, S
 
 Issue createIssues (ObjectBean objectOrg, Map<String, Boolean> boolPassportflags) {
     def today = new java.sql.Timestamp(new Date().getTime()).toLocalDateTime().format('yyyy-MM')
-    def orgPreviousTask = objectOrg.getAttributeValues('Актуализация ИТ')[0].getValue()
+    def orgPreviousTask = "_нет такой задачи_"
+    if (!objectOrg.getAttributeValues('Актуализация ИТ').empty) {
+        if (ComponentAccessor.getIssueManager().isExistingIssueKey(objectOrg.getAttributeValues('Актуализация ИТ')[0].getValue().toString())) {
+            orgPreviousTask = objectOrg.getAttributeValues('Актуализация ИТ')[0].getValue()
+        }
+    }
     String summary = "Плановая актуализация паспорта объекта ${objectOrg.getName()}. ${today}."
     String description =  """
         h2. *Плановая задача актуализации паспортов клиентов*                    
@@ -502,7 +507,7 @@ if (!objectsOrg.isEmpty()) {
                 // create task and subtasks for objectOrg
                 if (boolPassportflags.values().any { it }) {
                     Issue issueMain = createIssues(objectOrg, boolPassportflags)
-                    return issueMain
+                    log.warn(issueMain)
                 }
             }            
         }        
